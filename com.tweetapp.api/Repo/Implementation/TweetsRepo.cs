@@ -2,6 +2,7 @@
 using com.tweetapp.api.Data;
 using com.tweetapp.api.Models;
 using com.tweetapp.api.Repo.IRepo;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 
 namespace com.tweetapp.api.Repo.Implementation
@@ -16,6 +17,12 @@ namespace com.tweetapp.api.Repo.Implementation
             this.db = db;
             this.mapper = mapper;
         }
+
+        public async Task Consume(ConsumeContext<Tweet> context)
+        {
+            await PostTweet(context.Message);
+        }
+
         public async Task<bool> DeleteTweet(int id)
         {
             var tweet = await db.Tweets.FirstOrDefaultAsync(m => m.Id == id);

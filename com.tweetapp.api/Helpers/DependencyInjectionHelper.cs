@@ -1,4 +1,5 @@
-﻿using com.tweetapp.api.Repo.Implementation;
+﻿using com.tweetapp.api.Log;
+using com.tweetapp.api.Repo.Implementation;
 using com.tweetapp.api.Repo.IRepo;
 using com.tweetapp.api.Services.Implementation;
 using com.tweetapp.api.Services.IServices;
@@ -15,6 +16,8 @@ namespace com.tweetapp.api.Helpers
 
             services.AddScoped<IUsersServices, UsersServices>();
             services.AddScoped<ITweetsServices, TweetsServices>();
+
+            services.AddScoped<ILog, LogNLog>();
         }
     }
 }

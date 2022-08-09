@@ -3,6 +3,7 @@ using com.tweetapp.api.Models;
 using com.tweetapp.api.Repo.IRepo;
 using com.tweetapp.api.Services.IServices;
 using com.tweetapp.api.ViewModels;
+using MassTransit;
 
 namespace com.tweetapp.api.Services.Implementation
 {
@@ -12,13 +13,17 @@ namespace com.tweetapp.api.Services.Implementation
         private readonly ITweetsRepo tweetsRepo;
         private readonly IRepliesRepo repliesRepo;
         private readonly IMapper mapper;
+        private readonly IPublishEndpoint publishEndpoint;
+        
 
-        public TweetsServices(IUsersRepo usersRepo, ITweetsRepo tweetsRepo, IRepliesRepo repliesRepo, IMapper mapper)
+        public TweetsServices(IUsersRepo usersRepo, ITweetsRepo tweetsRepo, IRepliesRepo repliesRepo, IMapper mapper,IPublishEndpoint publishEndpoint)
         {
             this.usersRepo = usersRepo;
             this.tweetsRepo = tweetsRepo;
             this.repliesRepo = repliesRepo;
             this.mapper = mapper;
+            this.publishEndpoint = publishEndpoint;
+            
         }
 
         public async Task<bool> DeleteTweet(string username, int id)
@@ -102,7 +107,9 @@ namespace com.tweetapp.api.Services.Implementation
                 Message = message,
                 Likes = 0
             };
-            return await tweetsRepo.PostTweet(tweet);
+            await publishEndpoint.Publish<Tweet>(tweet);
+            return true;
+            //return await tweetsRepo.PostTweet(tweet);
         }
 
         public async Task<TweetsViewModel> ReplyTweet(string username, int id, string message)

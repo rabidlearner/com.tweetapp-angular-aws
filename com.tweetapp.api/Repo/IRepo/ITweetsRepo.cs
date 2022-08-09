@@ -1,8 +1,9 @@
 ﻿using com.tweetapp.api.Models;
+using MassTransit;
 
 namespace com.tweetapp.api.Repo.IRepo
 {
-    public interface ITweetsRepo
+    public interface ITweetsRepo:IConsumer<Tweet>
     {
         Task<bool> PostTweet(Tweet Tweet);
         Task<Tweet> UpdateTweet(Tweet Tweet);
