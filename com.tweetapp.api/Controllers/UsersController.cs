@@ -1,4 +1,5 @@
-﻿using com.tweetapp.api.Models;
+﻿using com.tweetapp.api.Log;
+using com.tweetapp.api.Models;
 using com.tweetapp.api.Services.IServices;
 using com.tweetapp.api.ViewModels;
 using Microsoft.AspNetCore.Authorization;
@@ -18,69 +19,126 @@ namespace com.tweetapp.api.Controllers
     {
         private readonly IUsersServices usersServices;
         private readonly IConfiguration _configuration;
+        private readonly ILog logger;
+        private readonly string message = "Unexpected error occured, please go through log files to know more.";
 
-        public UsersController(IUsersServices usersServices, IConfiguration _configuration)
+        public UsersController(IUsersServices usersServices, IConfiguration _configuration,ILog logger)
         {
             this.usersServices = usersServices;
             this._configuration = _configuration;
+            this.logger = logger;
         }
         [HttpPost("register")]
-        public async Task<string> Register(User user)
+        public async Task<IActionResult> Register(User user)
         {
-            var result = await usersServices.Register(user);
-            if(result)
+            try
             {
-                return "Successfully Registered";
+                logger.Information("Started Registering New User");
+                var result = await usersServices.Register(user);
+                if (result)
+                {
+                    logger.Information("Registered Successfully");
+                    return Ok("Successfully Registered");
+                }
+                logger.Error("User detailes not stored in Database");
+                return BadRequest("Something went wrong please try again");
             }
-            return "Something went wrong please try again";
+            catch(Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
+            
         }
         [HttpGet("login")]
         public async Task<IActionResult> Login([FromQuery] LoginViewModel loginViewModel)
         {
-            User result = await usersServices.Login(loginViewModel);
-            if (result == null)
+            try
             {
-                return NotFound();
-            }
-            var claims = new[] {
+                logger.Information("Login Method was called");
+                User result = await usersServices.Login(loginViewModel);
+                if (result == null)
+                {
+                    logger.Warning("User deatails not found");
+                    return NotFound();
+                }
+                logger.Information("Adding Claims to User");
+                var claims = new[] 
+                {
                         new Claim(JwtRegisteredClaimNames.Sub, _configuration["Jwt:Subject"]),
                         new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                         new Claim(JwtRegisteredClaimNames.Iat, DateTime.UtcNow.ToString()),
                         new Claim("UserId", result.Id.ToString()),
                         new Claim("DisplayName", result.FirstName),
                         new Claim("UserName", result.UserName)
-                        
-                    };
+                };
+                logger.Information("cliams added successfully");
+                logger.Information("Creating JWT Token");
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+                var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+                var token = new JwtSecurityToken(
+                    _configuration["Jwt:Issuer"],
+                    _configuration["Jwt:Audience"],
+                    claims,
+                    expires: DateTime.UtcNow.AddMinutes(10),
+                    signingCredentials: signIn);
+                logger.Information("JWT Token Created Successfully");
+                return Ok(new JwtSecurityTokenHandler().WriteToken(token));
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
 
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
-            var signIn = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var token = new JwtSecurityToken(
-                _configuration["Jwt:Issuer"],
-                _configuration["Jwt:Audience"],
-                claims,
-                expires: DateTime.UtcNow.AddMinutes(10),
-                signingCredentials: signIn);
-
-            return Ok(new JwtSecurityTokenHandler().WriteToken(token));
-            
         }
         [HttpGet("users/all")]
         [Authorize]
-        public async Task<List<UserViewModel>> GetAllUsers()
+        public async Task<IActionResult> GetAllUsers()
         {
-            return await usersServices.GetAllUsers();            
+            try
+            {
+                logger.Information("Fetching All User Details");
+                var users = await usersServices.GetAllUsers();
+                logger.Information("User details feched successfully");
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
+                     
         }
         [HttpGet("{username}/Forgot")]
         [Authorize]
-        public async Task<string> ForgotPassword([FromQuery] ForgotPasswordViewModel viewModel)
+        public async Task<IActionResult> ForgotPassword([FromQuery] ForgotPasswordViewModel viewModel)
         {
-            return await usersServices.GetPassword(viewModel);
+            try
+            {
+                logger.Information("Fetching Password for user");
+                var password = await usersServices.GetPassword(viewModel);
+                logger.Information("Password fetched Successfully");
+                return Ok(password);
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
         }
         [HttpGet("user/search/{username}")]
         [Authorize]
-        public async Task<List<UserViewModel>> Search(string username)
+        public async Task<IActionResult> Search(string username)
         {
-            return await usersServices.Search(username);
+            try
+            {
+                logger.Information("Search for users started");
+                var users = await usersServices.Search(username);
+                logger.Information("User details found successfully");
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
+            
         }
     }
 }

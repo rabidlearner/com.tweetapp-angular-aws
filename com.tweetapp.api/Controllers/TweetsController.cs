@@ -19,7 +19,7 @@ namespace com.tweetapp.api.Controllers
         private readonly ITweetsServices tweetsServices;
         private readonly IUsersServices usersServices;
         private readonly ILog logger;
-
+        private readonly string message = "Unexpected error occured, please go through log files to know more.";
         public TweetsController(ITweetsServices tweetsServices, IUsersServices usersServices,ILog logger)
         {
             this.tweetsServices = tweetsServices;
@@ -27,56 +27,120 @@ namespace com.tweetapp.api.Controllers
             this.logger = logger;
         }
         [HttpPost("{username}/add")]        
-        public async Task<string> PostTweet([FromBody] PostTweetViewModel tweet, [FromRoute] string username)
+        public async Task<IActionResult> PostTweet([FromBody] PostTweetViewModel tweet, [FromRoute] string username)
         {
-            bool result = await tweetsServices.PostTweet(tweet.Message,username);
-            if (result)
+            try
             {
-                return "Successfully Posted";
+                logger.Information("Posting tweet ..");
+                bool result = await tweetsServices.PostTweet(tweet.Message, username);
+                if (result)
+                {
+                    logger.Information("tweet posted successfully");
+                    return Ok("Successfully Posted");
+                }
+                logger.Information("Tweet not posted to database");
+                return BadRequest("Something went wrong please try again");
             }
-            return "Something went wrong please try again";
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);            
+            }
         }
         [HttpPut("{username}/update/{id}")]
-        public async Task<TweetsViewModel> UpdateTweet([FromBody] TweetsViewModel viewModel, [FromRoute] string username, [FromRoute] int id)
+        public async Task<IActionResult> UpdateTweet([FromBody] TweetsViewModel viewModel, [FromRoute] string username, [FromRoute] int id)
         {
-            TweetsViewModel result = await tweetsServices.UpdateTweet(username,id,viewModel);
-            if (result!=null)
+            try
             {
-                return result;
+                logger.Information("Updating tweet ..");
+                var result = await tweetsServices.UpdateTweet(username, id, viewModel);
+                logger.Information("Tweet has been updated");
+                return Ok(result);
             }
-            return null;
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
         }
         [HttpDelete("{username}/delete/{id}")]
-        public async Task<string> DeleteTweet([FromRoute]string username, [FromRoute]int id)
+        public async Task<IActionResult> DeleteTweet([FromRoute]string username, [FromRoute]int id)
         {
-            bool result = await tweetsServices.DeleteTweet(username,id);
-            if (result)
+            try
             {
-                return "Successfully Deleted";
+                logger.Information("Deleting tweet ..");
+                bool result = await tweetsServices.DeleteTweet(username, id);
+                if (result)
+                {
+                    logger.Information("Tweet deleted sucessfully");
+                    return Ok("Successfully Deleted");
+                }
+                logger.Error("Something wrong with database");
+                return BadRequest("Something went wrong please try again");
             }
-            return "Something went wrong please try again";
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
         }
         [HttpGet("{username}")]
-        public async Task<List<TweetsViewModel>> GetAllTweetsOfUser([FromRoute] string username)
+        public async Task<IActionResult> GetAllTweetsOfUser([FromRoute] string username)
         {
-            return await tweetsServices.GetAllTweetsofUser(username);            
+            try
+            {
+                logger.Information($"getting all tweets for user {username}");
+                var tweets = await tweetsServices.GetAllTweetsofUser(username);
+                logger.Information("Fetched all tweets for user");
+                return Ok(tweets);
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
         }
         [HttpGet]
         [Route("all")]
-        public async Task<List<TweetsViewModel>> GetAllTweets()
+        public async Task<IActionResult> GetAllTweets()
         {
-            logger.Information("started getting all tweets");
-            return await tweetsServices.GetAllTweets();
+            try
+            {
+                logger.Information("started getting all tweets");
+                var tweets = await tweetsServices.GetAllTweets();
+                logger.Information("Fetched all tweets");
+                return Ok(tweets);
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }
         }
         [HttpPut("{username}/like/{id}")]
-        public async Task<TweetsViewModel> Like(string username,int id)
+        public async Task<IActionResult> Like(string username,int id)
         {
-            return await tweetsServices.LikeTweet(username,id);
+            try
+            {
+                logger.Information("Adding like to tweet");
+                var tweet = await tweetsServices.LikeTweet(username, id);
+                logger.Information("Added like to tweet");
+                return Ok(tweet);
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }             
         }
         [HttpPost("{username}/reply/{id}")]
-        public async Task<TweetsViewModel> Reply([FromRoute]string username, [FromRoute]int id, [FromBody]PostTweetViewModel postTweetViewModel)
+        public async Task<IActionResult> Reply([FromRoute]string username, [FromRoute]int id, [FromBody]PostTweetViewModel postTweetViewModel)
         {
-            return await tweetsServices.ReplyTweet(username, id,postTweetViewModel.Message);
+            try
+            {
+                logger.Information("Adding Reply to tweet");
+                var tweet = await tweetsServices.ReplyTweet(username, id, postTweetViewModel.Message);
+                logger.Information("Reply has been added successfully");
+                return Ok(tweet);
+            }
+            catch (Exception ex)
+            {                
+                return BadRequest(ex.Message ?? message);
+            }            
         }
     }
 }
