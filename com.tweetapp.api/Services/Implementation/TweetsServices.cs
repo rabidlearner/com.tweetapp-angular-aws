@@ -36,8 +36,19 @@ namespace com.tweetapp.api.Services.Implementation
                 var user = await usersRepo.GetUser(username);
                 if (user == null)
                 {
-                    logger.Warning("User details doesn't match");
-                    throw new Exception("User details doesn't match");                    
+                    logger.Warning("User details not found");
+                    throw new Exception("User details not found");                    
+                }
+                var tweet = await tweetsRepo.GetTweet(id);
+                if (tweet == null)
+                {
+                    logger.Warning("tweet details doesn't match");
+                    throw new Exception("tweet details doesn't match");
+                }
+                if(tweet.UserId != user.Id)
+                {
+                    logger.Warning("No Permissions to delete");
+                    throw new Exception("No Permissions to delete");
                 }
                 logger.Information("User details matched");
                 logger.Information("Performing delete operations");
