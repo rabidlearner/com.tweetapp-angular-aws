@@ -3,6 +3,7 @@ using com.tweetapp.api.Models;
 using com.tweetapp.api.Services.IServices;
 using com.tweetapp.api.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -13,8 +14,10 @@ using System.Text;
 
 namespace com.tweetapp.api.Controllers
 {
+
     [Route("api/v{version:apiVersion}/tweets")]
     [ApiController]
+    [ApiVersion("1.0")]
     public class UsersController : ControllerBase
     {
         private readonly IUsersServices usersServices;
@@ -38,7 +41,7 @@ namespace com.tweetapp.api.Controllers
                 if (result)
                 {
                     logger.Information("Registered Successfully");
-                    return Ok("Successfully Registered");
+                    return Ok(new {result = "Successfully Registered"});
                 }
                 logger.Error("User detailes not stored in Database");
                 return BadRequest("Something went wrong please try again");
@@ -49,8 +52,8 @@ namespace com.tweetapp.api.Controllers
             }
             
         }
-        [HttpGet("login")]
-        public async Task<IActionResult> Login([FromQuery] LoginViewModel loginViewModel)
+        [HttpPost("login")]
+        public async Task<IActionResult> Login([FromBody] LoginViewModel loginViewModel)
         {
             try
             {
@@ -82,7 +85,7 @@ namespace com.tweetapp.api.Controllers
                     expires: DateTime.UtcNow.AddMinutes(10),
                     signingCredentials: signIn);
                 logger.Information("JWT Token Created Successfully");
-                return Ok(new JwtSecurityTokenHandler().WriteToken(token));
+                return Ok(new {JwtToken = new JwtSecurityTokenHandler().WriteToken(token), name = result.FirstName , userName = result.UserName });
             }
             catch (Exception ex)
             {                
@@ -108,7 +111,7 @@ namespace com.tweetapp.api.Controllers
                      
         }
         [HttpGet("{username}/Forgot")]
-        [Authorize]
+        
         public async Task<IActionResult> ForgotPassword([FromQuery] ForgotPasswordViewModel viewModel)
         {
             try
@@ -116,7 +119,7 @@ namespace com.tweetapp.api.Controllers
                 logger.Information("Fetching Password for user");
                 var password = await usersServices.GetPassword(viewModel);
                 logger.Information("Password fetched Successfully");
-                return Ok(password);
+                return Ok(new { password = password });
             }
             catch (Exception ex)
             {                

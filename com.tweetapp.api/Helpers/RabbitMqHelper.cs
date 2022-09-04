@@ -16,7 +16,7 @@ namespace com.tweetapp.api.Helpers
                 //x.SetKebabCaseEndpointNameFormatter();
 
                 x.UsingRabbitMq((context, cfg) => {
-                    cfg.Host("amqp://guest:guest@localhost:5672");
+                    cfg.Host("amqp://user:password@192.168.230.162:5672");
                     cfg.ReceiveEndpoint("tweet-queue", c =>
                     {
                         c.ConfigureConsumer<TweetsRepo>(context);
