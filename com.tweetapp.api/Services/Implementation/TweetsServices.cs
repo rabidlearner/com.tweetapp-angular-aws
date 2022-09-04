@@ -251,7 +251,7 @@ namespace com.tweetapp.api.Services.Implementation
             }
         }
 
-        public async Task<TweetsViewModel> UpdateTweet(string username, int id, TweetsViewModel viewModel)
+        public async Task<TweetsViewModel> UpdateTweet(string username, int id, PostTweetViewModel viewModel)
         {
             try
             {
@@ -286,8 +286,14 @@ namespace com.tweetapp.api.Services.Implementation
                     logger.Information("tweet details not updated to repo");
                     throw new Exception("Database operation failed");
                 }
-                logger.Information("tweet details updated");
-                return viewModel;
+                logger.Information("creating tweet view model");
+                var replies = await repliesRepo.GetReplies(tweet.Id);
+                var repliesVm = mapper.Map<List<RepliesViewModel>>(replies);
+                var tweetVm = mapper.Map<TweetsViewModel>(tweet);
+                tweetVm.UserName = user.UserName;
+                tweetVm.RepliesViewModels = repliesVm;
+                logger.Information("created tweet view model");
+                return tweetVm;
             }
             catch (Exception ex)
             {

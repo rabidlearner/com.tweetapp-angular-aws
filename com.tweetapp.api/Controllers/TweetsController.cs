@@ -3,6 +3,7 @@ using com.tweetapp.api.Models;
 using com.tweetapp.api.Services.IServices;
 using com.tweetapp.api.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -36,7 +37,7 @@ namespace com.tweetapp.api.Controllers
                 if (result)
                 {
                     logger.Information("tweet posted successfully");
-                    return Ok("Successfully Posted");
+                    return Ok(new { success = "Successfully Posted" });
                 }
                 logger.Information("Tweet not posted to database");
                 return BadRequest("Something went wrong please try again");
@@ -47,7 +48,7 @@ namespace com.tweetapp.api.Controllers
             }
         }
         [HttpPut("{username}/update/{id}")]
-        public async Task<IActionResult> UpdateTweet([FromBody] TweetsViewModel viewModel, [FromRoute] string username, [FromRoute] int id)
+        public async Task<IActionResult> UpdateTweet([FromBody] PostTweetViewModel viewModel, [FromRoute] string username, [FromRoute] int id)
         {
             try
             {
@@ -71,7 +72,7 @@ namespace com.tweetapp.api.Controllers
                 if (result)
                 {
                     logger.Information("Tweet deleted sucessfully");
-                    return Ok("Successfully Deleted");
+                    return Ok(new { result = "Successfully Deleted" });
                 }
                 logger.Error("Something wrong with database");
                 return BadRequest("Something went wrong please try again");
