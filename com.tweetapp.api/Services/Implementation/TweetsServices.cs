@@ -202,9 +202,9 @@ namespace com.tweetapp.api.Services.Implementation
                     Likes = 0
                 };
                 logger.Information("Published tweet to rabbitmq");
-                await publishEndpoint.Publish<Tweet>(tweet);
-                return true;
-                //return await tweetsRepo.PostTweet(tweet);
+                //await publishEndpoint.Publish<Tweet>(tweet);
+                //return true;
+                return await tweetsRepo.PostTweet(tweet);
             }
             catch (Exception ex)
             {
